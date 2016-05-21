@@ -28,44 +28,27 @@
           dataType: "json"
         });
       }
-      function getRes(sid,callback2) {        
-        $.ajax({
-        type: "POST",
-        contentType: "application/json; charset=utf-8",
-        url: "/res",
-        data: JSON.stringify({"sid":sid}),
-        success: function (res) {
-            callback2(res);
-        },
-        dataType: "json"
-        });
-      }
       $(function() { 
         var interval;
-        function callback(data){
-            interval = setInterval(function(){
-                if(data.sid == 0)
-                    $('#form_output').val('backend service not found.');
-                else
-                    getRes(data.sid, callback2);
-            }, 1000);
-        }
-        function callback2(res){
+        function callback(res){
             if(res.responds != '0'){
                 clearInterval(interval);
-                $('#form_output').val(res.responds);
+                $('#form_output').val(res.output);
             }
         }
         $( "#form_net_sample" ).submit(function( event ) {
-          event.preventDefault();
-          $('#form_output').val('load...');
+		  $('#form_output').val('loading...');
           var primetext = $('#form_input').val();
           if(primetext.length <= 0){primetext = '';}
           var temperature = $('#form_temperature').val();
           if(temperature <= 0 || temperature > 10){temperature = '1';}
           var seed = $('#form_seed').val();
           if(seed.length <= 0){seed = '123';}
-          getChar({"primetext":primetext, "temperature":temperature, "seed":seed},callback);
+		  var length = $('#form_length').val();
+		  if (length <= 0) length = 100;
+          getChar({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#form_model').val(), "samplelength":length},callback);
+		  $('#form_seed').val(new Date().getTime()%1024);
+		  return false;
         });
       });
     </script>
@@ -73,12 +56,16 @@
   <body>
     
     <form method="post" id="form_net_sample" class="form-group">
+		<label for="form_model">model<span class="description"></span></label>
+      <input name="form_model" type="text" class="form-control" id="form_model" placeholder="model name" value="">
 		<label for="form_input">primetext<span class="description"></span></label>
       <input name="form_input" type="text" class="form-control" id="form_input" placeholder="your text" value="">
       <label for="form_temperature">temperature<span class="description">(0-1)</span></label>
       <input name="form_temperature" type="text" class="form-control" id="form_temperature" placeholder="0.7" value="0.7">
       <label for="form_seed">seed<span class="description"> (any number)</span></label>
       <input name="form_seed" type="text" class="form-control" id="form_seed" placeholder="1" value="1">
+      <label for="form_length">length<span class="description"> (any number)</span></label>
+      <input name="form_length" type="text" class="form-control" id="form_length" placeholder="200" value="200">
 
       <br/>
       <button type="submit" class="btn btn-default">submit</button>  
