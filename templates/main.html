@@ -36,6 +36,10 @@
                 $('#form_output').val(res.output);
             }
         }
+		$.get('/models', function(data) {
+			for (var i = 0; i < data.models.length; ++i)
+				$('#form_model').append('<option vallue="TXT">TXT</option>'.replace(/TXT/g, data.models[i]));
+		});
         $( "#form_net_sample" ).submit(function( event ) {
 		  $('#form_output').val('loading...');
           var primetext = $('#form_input').val();
@@ -57,7 +61,7 @@
     
     <form method="post" id="form_net_sample" class="form-group">
 		<label for="form_model">model<span class="description"></span></label>
-      <input name="form_model" type="text" class="form-control" id="form_model" placeholder="model name" value="">
+      <select name="form_model" class="form-control" id="form_model" placeholder="model name"></select>
 		<label for="form_input">primetext<span class="description"></span></label>
       <input name="form_input" type="text" class="form-control" id="form_input" placeholder="your text" value="">
       <label for="form_temperature">temperature<span class="description">(0-1)</span></label>
