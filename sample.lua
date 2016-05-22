@@ -149,14 +149,14 @@ for i=1, opt.length do
 		prev_char = prev_char_:resize(1)
 	else
 		-- use sampling
-		real_char = 'UNKNOW'
-		while(real_char == 'UNKNOW') do
-			prediction:div(opt.temperature) -- scale by temperature
-			local probs = torch.exp(prediction):squeeze()
-			probs:div(torch.sum(probs)) -- renormalize so probs sum to one
-			prev_char = torch.multinomial(probs:float(), 1):resize(1):float()
-			real_char = ivocab[prev_char[1]]
-		end
+		-- real_char = 'UNKNOW'
+		-- while(real_char == 'UNKNOW') do
+		prediction:div(opt.temperature) -- scale by temperature
+		local probs = torch.exp(prediction):squeeze()
+		probs:div(torch.sum(probs)) -- renormalize so probs sum to one
+		prev_char = torch.multinomial(probs:float(), 1):resize(1):float()
+		real_char = ivocab[prev_char[1]]
+		-- end
 	end
 
     -- forward the rnn for next character
@@ -166,7 +166,8 @@ for i=1, opt.length do
     prediction = lst[#lst] -- last element holds the log probabilities
 
     -- io.write(ivocab[prev_char[1]])
-    result = result .. ivocab[prev_char[1]]
+	if real_char == 'UNKNOW' then real_char = '□' end
+    result = result .. real_char
 
 	-- in my data, five \n represent the end of each document
 	-- so count \n to stop sampling
