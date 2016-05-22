@@ -154,6 +154,8 @@ function get_vocab(str, min_freq)
 	for char_val, char_cnt in pairs(unordered) do
 		if char_cnt >= min_freq then
 			final_res[char_val] = true
+		else
+			final_res["□"] = true
 		end
 	end
     return final_res
