@@ -40,10 +40,11 @@ def api():
         command = u'th sample.lua "%s" -seed %s -primetext "%s" -temperature %s -length %s -gpuid %d' % (model, seed, text, temp, length, -1 if model.endswith('_cpu.t7') else 0)
         status, output = commands.getstatusoutput(command)
         if '--------------------------' in output:
-            output = output.split('--------------------------\n')[-1]
+            output = output.split('--------------------------')[-1]
         
         print output 
-        output = re.findall(ur".+[.,。，].*$", output)[0]
+        output = output[:max(output.rfind('.'), output.rfind(','), output.rfind(u'。'), output.rfind(u'，'))-1]
+
         result['output'] += '[%s] %s\n\n' % (model, output + u'。')
         
         text = output[max(output.rfind('.'), output.rfind(','), output.rfind(u'。'), output.rfind(u'，')) + 1:] + u'，'
