@@ -48,9 +48,11 @@
           if(temperature <= 0 || temperature > 10){temperature = '1';}
           var seed = $('#form_seed').val();
           if(seed.length <= 0){seed = '123';}
-		  var length = $('#form_length').val();
+		  var length = parseInt($('#form_length').val());
 		  if (length <= 0) length = 100;
-          getChar({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#form_model').val(), "samplelength":length},callback);
+		  var dialog = parseInt($('#form_dialog').val());
+		  dialog = (dialog < 1) ? 1 : ((dialog > 10) ? 10 : dialog);
+          getChar({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#form_model').val(), "samplelength":length, "dialog":dialog},callback);
 		  $('#form_seed').val(new Date().getTime()%1024);
 		  return false;
         });
@@ -70,6 +72,8 @@
       <input name="form_seed" type="text" class="form-control" id="form_seed" placeholder="1" value="1">
       <label for="form_length">length<span class="description"> (any number)</span></label>
       <input name="form_length" type="text" class="form-control" id="form_length" placeholder="200" value="200">
+      <label for="form_dialog">dialog<span class="description"> (1-10)</span></label>
+      <input name="form_dialog" type="text" class="form-control" id="form_dialog" placeholder="1" value="1">
 
       <br/>
       <button type="submit" class="btn btn-default">submit</button>  

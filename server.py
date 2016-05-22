@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #encoding=utf-8
-import sys, os
+import sys, os, re
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -31,6 +31,27 @@ def api():
     if not os.path.exists(model): return ''
     length = int(request.json['samplelength'])
     length = min(length, 200)
+    dialog = int(request.json.get('dialog', '1'))
+    
+    result = {"output": ""}
+    models = os.listdir('cv/')
+    i = models.index(model[model.find('/')+1:])
+    for _ in range(1, dialog):
+        command = u'th sample.lua "%s" -seed %s -primetext "%s" -temperature %s -length %s -gpuid %d' % (model, seed, text, temp, length, -1 if model.endswith('_cpu.t7') else 0)
+        status, output = commands.getstatusoutput(command)
+        if '--------------------------' in output:
+            output = output.split('--------------------------\n')[-1]
+        
+        print output 
+        output = re.findall(ur".+[.,。，].*$", output)[0]
+        result['output'] += '[%s] %s\n\n' % (model, output + u'。')
+        
+        text = output[max(output.rfind('.'), output.rfind(','), output.rfind(u'。'), output.rfind(u'，')) + 1:] + u'，'
+        model = models[(i + 1) % len(models)]
+            
+    return jsonify(result), 200
+    
+    
     command = u'th sample.lua "%s" -seed %d -primetext "%s" -temperature %.4f -length %d -gpuid %d' % (model, seed, text, temp, length, -1 if model.endswith('_cpu.t7') else 0)
     status, output = commands.getstatusoutput(command)
     print command
@@ -42,4 +63,4 @@ def models():
     return jsonify({"models": ['cv/' + _ for _ in os.listdir('cv/')]}), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=9987, debug=False)
+    app.run(host='0.0.0.0', port=9987, debug=True)
