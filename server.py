@@ -24,13 +24,17 @@ def api():
     if not request.json or not 'primetext' in request.json:
         abort(400)
     text = request.json['primetext'].decode('utf-8')
-    temp = request.json['temperature']
-    seed = request.json['seed']
+    if '"' in text or '\'' in text: text = ''
+    temp = float(request.json['temperature'])
+    seed = int(request.json['seed'])
     model = request.json['model']
-    length = request.json['samplelength']
+    if not os.path.exists(model): return ''
+    length = int(request.json['samplelength'])
     length = min(length, 200)
-    command = u'th sample.lua "%s" -seed %s -primetext "%s" -temperature %s -length %s -gpuid %d' % (model, seed, text, temp, length, -1 if model.endswith('_cpu.t7') else 0)
+    command = u'th sample.lua "%s" -seed %d -primetext "%s" -temperature %.4f -length %d -gpuid %d' % (model, seed, text, temp, length, -1 if model.endswith('_cpu.t7') else 0)
     status, output = commands.getstatusoutput(command)
+    print command
+    print output
     return jsonify({"output": output}), 200
     
 @app.route('/models')
@@ -38,4 +42,4 @@ def models():
     return jsonify({"models": ['cv/' + _ for _ in os.listdir('cv/')]}), 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=9987, debug=True)
+    app.run(host='0.0.0.0', port=9987, debug=False)
