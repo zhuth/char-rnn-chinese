@@ -48,7 +48,7 @@ def api():
         result['output'] += '[%s] %s\n\n' % (model, output + u'。')
         
         text = output[max(output.rfind('.'), output.rfind(','), output.rfind(u'。'), output.rfind(u'，')) + 1:] + u'，'
-        model = models[(i + 1) % len(models)]
+        model = 'cv/' + models[(i + 1) % len(models)]
             
     return jsonify(result), 200
     
