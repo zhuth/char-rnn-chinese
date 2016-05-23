@@ -36,28 +36,17 @@ def api():
     result = {"output": ""}
     models = os.listdir('cv/')
     i = models.index(model[model.find('/')+1:])
-    for _ in range(1, dialog):
+    for _ in range(0, dialog):
         command = u'th sample.lua "%s" -seed %s -primetext "%s" -temperature %s -length %s -gpuid %d' % (model, seed, text, temp, length, -1 if model.endswith('_cpu.t7') else 0)
         status, output = commands.getstatusoutput(command)
-        if '--------------------------' in output:
-            output = output.split('--------------------------')[-1]
-        
-        print output 
-        output = output[:max(output.rfind('.'), output.rfind(','), output.rfind(u'。'), output.rfind(u'，'))-1]
-
-        result['output'] += '[%s] %s\n\n' % (model, output + u'。')
-        
-        text = output[max(output.rfind('.'), output.rfind(','), output.rfind(u'。'), output.rfind(u'，')) + 1:] + u'，'
+        if status == 0:
+            output = output.split(u'--------------------------')[-1]
+            output = output[:max(output.rfind(u'.'), output.rfind(u','), output.rfind(u'。'), output.rfind(u'，'))]
+            result['output'] += '[%s] %s\n\n' % (model, output + u'。')
+            text = output[max(output.rfind('.'), output.rfind(','), output.rfind(u'。'), output.rfind(u'，')) + 1:] + u'，'
         model = 'cv/' + models[(i + 1) % len(models)]
-            
+        i+=1    
     return jsonify(result), 200
-    
-    
-    command = u'th sample.lua "%s" -seed %d -primetext "%s" -temperature %.4f -length %d -gpuid %d' % (model, seed, text, temp, length, -1 if model.endswith('_cpu.t7') else 0)
-    status, output = commands.getstatusoutput(command)
-    print command
-    print output
-    return jsonify({"output": output}), 200
     
 @app.route('/models')
 def models():
