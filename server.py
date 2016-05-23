@@ -12,8 +12,9 @@ import hashlib
 import commands
 
 app = Flask(__name__)
-channel_name = 'cv_channel'
 
+def get_models():
+    return ['cv/' + _ for _ in os.listdir('cv/') if _.endswith('.t7')]
 
 @app.route('/')
 def index():
@@ -34,23 +35,24 @@ def api():
     dialog = int(request.json.get('dialog', '1'))
     
     result = {"output": ""}
-    models = os.listdir('cv/')
-    i = models.index(model[model.find('/')+1:])
+    models = get_models()
+    i = models.index(model)
     for _ in range(0, dialog):
-        command = u'th sample.lua "%s" -seed %s -primetext "%s" -temperature %s -length %s -gpuid %d' % (model, seed, text, temp, length, -1 if model.endswith('_cpu.t7') else 0)
+        model = models[i]
+        command = u'th sample.lua "%s" -seed %s -primetext "%s" -temperature %s -length %s -gpuid %d %s' % (model, seed, text, temp, length, -1 if model.endswith('_cpu.t7') else 0, '' if _ == 0 else '-noprime')
         status, output = commands.getstatusoutput(command)
+        print status, command.encode('utf-8')
         if status == 0:
             output = output.split(u'--------------------------')[-1]
-            output = output[:max(output.rfind(u'.'), output.rfind(u','), output.rfind(u'。'), output.rfind(u'，'))]
+            output = output[:max(output.rfind(u'.'), output.rfind(u','), output.rfind(u'。'), output.rfind(u'，'))] + u'。'
             result['output'] += '[%s] %s\n\n' % (model, output + u'。')
-            text = output[max(output.rfind('.'), output.rfind(','), output.rfind(u'。'), output.rfind(u'，')) + 1:] + u'，'
-        model = 'cv/' + models[(i + 1) % len(models)]
-        i+=1    
+            text = output.replace('\n', '')
+        i = (i + 1) % len(models) 
     return jsonify(result), 200
     
 @app.route('/models')
 def models():
-    return jsonify({"models": ['cv/' + _ for _ in os.listdir('cv/') if _.endswith('.t7')]}), 200
+    return jsonify({"models": get_models()}), 200
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=9987, debug=True)

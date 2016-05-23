@@ -16,47 +16,56 @@
     </style>
     
     <script>
-      function getChar(inputdata,callback) {        
+    function wash(text){
+		var rule_empty = [ /\n/g, /\s+/g, /\d+/g, /（）|【.*?】|〖.*?〗|['"‘“’”]/g ];
+		for (var i = 0; i < rule_empty.length; ++i) text = text.replace(rule_empty[i], '');
+		var ends = Math.max(text.lastIndexOf(','), text.lastIndexOf('.'), text.lastIndexOf('，'), text.lastIndexOf('。'), text.lastIndexOf('?'), text.lastIndexOf('？'), text.lastIndexOf('！'), text.lastIndexOf('!'));
+		text = text.substr(0, ends + 1);
+		if (text[ends] == ',' || text[ends] == '，') text = text.substr(0, text.length-1) + '。';
+		return text;
+    }
+    function callRPC(inputdata) {        
         $.ajax({
           type: "POST",
           contentType: "application/json; charset=utf-8",
-          url: "/api",
+          url: "/rpc",
           data: JSON.stringify(inputdata),
           success: function (data) {
-            callback(data);
-          },
+			  text = wash(data.output);
+		      var v = $('#form_output').val()
+			  v += '[' + inputdata['model'] + ']\n' + text + '\n';
+			  $('#form_output').val(v);
+			  --window.dialog;
+			  inputdata['primetext'] = text;
+			  inputdata['model'] = $('option')[parseInt(Math.random()*$('option').length)].value;
+			  
+			  if (window.dialog > 0) callRPC(inputdata);
+	      },
           dataType: "json"
         });
-      }
-      $(function() { 
-        var interval;
-        function callback(res){
-            if(res.responds != '0'){
-                clearInterval(interval);
-                $('#form_output').val(res.output);
-            }
-        }
+    }
+    $(function() { 
 		$.get('/models', function(data) {
 			for (var i = 0; i < data.models.length; ++i)
 				$('#form_model').append('<option vallue="TXT">TXT</option>'.replace(/TXT/g, data.models[i]));
 		});
-        $( "#form_net_sample" ).submit(function( event ) {
-		  $('#form_output').val('loading...');
-          var primetext = $('#form_input').val();
-          if(primetext.length <= 0){primetext = '';}
-          var temperature = $('#form_temperature').val();
-          if(temperature <= 0 || temperature > 10){temperature = '1';}
-          var seed = $('#form_seed').val();
-          if(seed.length <= 0){seed = '123';}
-		  var length = parseInt($('#form_length').val());
-		  if (length <= 0) length = 100;
-		  var dialog = parseInt($('#form_dialog').val());
-		  dialog = (dialog < 1) ? 1 : ((dialog > 10) ? 10 : dialog);
-          getChar({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#form_model').val(), "samplelength":length, "dialog":dialog},callback);
-		  $('#form_seed').val(new Date().getTime()%1024);
-		  return false;
+        $( "button" ).click(function( event ) {
+			$('#form_output').val('');
+			var primetext = $('#form_input').val();
+			if(primetext.length <= 0){primetext = '';}
+			var temperature = $('#form_temperature').val();
+			if(temperature <= 0 || temperature > 10){temperature = '1';}
+			var seed = $('#form_seed').val();
+			if(seed.length <= 0){seed = '123';}
+			var length = parseInt($('#form_length').val());
+			if (length <= 0) length = 100;
+			window.dialog = parseInt($('#form_dialog').val()); // <-- THIS IS GLOBAL!
+			window.dialog = (dialog < 1) ? 1 : ((dialog > 10) ? 10 : dialog);
+			callRPC({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#form_model').val(), "length":length});
+			$('#form_seed').val(new Date().getTime()%10240);
+			return false;
         });
-      });
+    });
     </script>
   </head>
   <body>
@@ -76,7 +85,7 @@
       <input name="form_dialog" type="text" class="form-control" id="form_dialog" placeholder="1" value="1">
 
       <br/>
-      <button type="submit" class="btn btn-default">submit</button>  
+      <button type="button" class="btn btn-default">submit</button>  
       <br/><br/>
       
       <label for="form_output">result</label>
