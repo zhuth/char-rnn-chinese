@@ -33,7 +33,7 @@
           success: function (data) {
 			  text = wash(data.output);
 		      var v = $('#form_output').val()
-			  v += '[' + inputdata['model'] + ']\n' + text + '\n';
+			  v += '[' + inputdata['model'] + ']\n' + (window.dialog == parseInt($('#form_dialog').val()) ? data.primetext : '') + text + '\n';
 			  $('#form_output').val(v);
 			  --window.dialog;
 			  inputdata['primetext'] = text;
@@ -50,7 +50,6 @@
 				$('#form_model').append('<option vallue="TXT">TXT</option>'.replace(/TXT/g, data.models[i]));
 		});
         $( "button" ).click(function( event ) {
-			$('#form_output').val('');
 			var primetext = $('#form_input').val();
 			if(primetext.length <= 0){primetext = '';}
 			var temperature = $('#form_temperature').val();
@@ -61,6 +60,8 @@
 			if (length <= 0) length = 100;
 			window.dialog = parseInt($('#form_dialog').val()); // <-- THIS IS GLOBAL!
 			window.dialog = (dialog < 1) ? 1 : ((dialog > 10) ? 10 : dialog);
+			$('#form_dialog').val(dialog);
+			$('#form_output').val('');
 			callRPC({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#form_model').val(), "length":length});
 			$('#form_seed').val(new Date().getTime()%10240);
 			return false;
