@@ -39,7 +39,7 @@ def api():
     
 @app.route('/models')
 def models():
-    return jsonify({"models": ['cv/' + _ for _ in os.listdir('cv/')]}), 200
+    return jsonify({"models": ['cv/' + _ for _ in os.listdir('cv/') if _.endswith('.t7')]}), 200
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=9987, debug=False)
