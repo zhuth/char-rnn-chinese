@@ -141,7 +141,7 @@ function prime(model, opt)
             -- lst is a list of [state1,state2,..stateN,output]. We want everything but last piece
             model.current_state = {}
             for i=1,state_size do table.insert(model.current_state, lst[i]) end
-            model.prediction = lst[#lst] -- last element holds the log probabilities
+            model.prediction = lst[#lst] -- last element holds the = probabilities
         end
     else
     -- fill with uniform probabilities over characters (? hmm)
@@ -163,8 +163,9 @@ function sample(model, opt)
         if opt.sample == 0 then
             -- use argmax
             local _, prev_char_ = model.prediction:max(2)
-            confidence = confidence + math.log(_:resize(1))
+            confidence = confidence + math.log(_[1][1])
             prev_char = prev_char_:resize(1)
+			real_char = model.ivocab[prev_char[1]]
         else
             -- use sampling
             -- real_char = 'UNKNOW'
