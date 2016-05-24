@@ -115,15 +115,22 @@
 			$(this).css('background', 'url(loading.gif) center center no-repeat');
             var primetext = $('#input').val();
             if(primetext.length <= 0){primetext = '';}
+			
             var temperature = $('#temperature').val();
             if(temperature <= 0 || temperature > 10){temperature = '1';}
+			$('#temperature').val(temperature);
+
             var seed = $('#seed').val();
             if(seed.length <= 0){seed = '123';}
+			#('#seed').val(seed);
+			
             var length = parseInt($('#length').val());
             if (length <= 0) length = 200; if (length > 200) length = 200;
+			$('#length').val(length)
             window.dialog = parseInt($('#dialog').val()); // <-- THIS IS GLOBAL!
             window.dialog = (dialog < 1) ? 1 : ((dialog > 10) ? 10 : dialog);
-            $('#dialog').val(dialog);
+            
+			$('#dialog').val(dialog);
             $('#output').html('');
             performDialog({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#model').val(), "length":length});
             return false;
