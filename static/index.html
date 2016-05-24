@@ -29,7 +29,7 @@
     
     <script>
     function wash(text){
-		text = text.replace(/,/g, '，').replace(/\./g, '。').replace(/!/g, '！').replace(/\?/g, '？').replace(/\(/g, '(').replace(/\)/g, '）').replace(/\[/g, '【').replace(/\]/g, '】').replace(/〔/g, '（').replace(/〕/g, '）');
+		text = text.replace(/,/g, '，').replace(/\./g, '。').replace(/!/g, '！').replace(/\?/g, '？').replace(/\(/g, '（').replace(/\)/g, '）').replace(/\[/g, '【').replace(/\]/g, '】').replace(/〔/g, '（').replace(/〕/g, '）');
 		text = text.replace(/([。；，：“”（）‘’、？《》])[。；，：“”（）‘’、？《》]/, '$1');
         var rule_empty = [ /\n/g, /[a-zA-Z\s]/g, /\d+/g, /（）|【.*?】|〖.*?〗|['"‘“’”]/g ];
         for (var i = 0; i < rule_empty.length; ++i) text = text.replace(rule_empty[i], '');
