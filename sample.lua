@@ -34,6 +34,7 @@ cmd:option('-temperature',1,'temperature of sampling')
 cmd:option('-gpuid',0,'which gpu to use. -1 = use CPU')
 cmd:option('-verbose',1,'set to 0 to ONLY print the sampled text, no diagnostics')
 cmd:option('-d',0,'run as daemon (with port number)')
+cmd:option('-noreuse',false,'do not reuse models in daemon mode')
 cmd:option('-stop','\n\n\n\n\n','stop sampling when detected')
 cmd:text()
 
@@ -228,8 +229,12 @@ if opt.d > 0 then
 			torch.manualSeed(dup.seed)
 		end
 		
-        if models[dup.model] == nil then models[dup.model] = load(dup) end
-        model = models[dup.model]
+		if opt.noreuse then
+			model = load(dup)
+		else
+	        if models[dup.model] == nil then models[dup.model] = load(dup) end
+	        model = models[dup.model]
+		end
         prime(model, dup)
         local jsonResponse = sample(model, dup)
         jsonResponse['model'] = dup.model
@@ -266,7 +271,6 @@ if opt.d > 0 then
        
        
        local r = json.encode( { models = models } )
-       print("r="..r)
        headers["Content-length"] = tostring(#r)
 
        local function xmlrpc_reply(wsapienv)
