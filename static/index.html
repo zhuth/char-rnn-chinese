@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>char-rnn</title>
     <meta charset="utf-8">
     <meta content="initial-scale=1, minimum-scale=1, width=device-width" name="viewport">
+    <title>无尽的对话</title>
     <script src="http://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
@@ -29,10 +29,10 @@
     
     <script>
     function wash(text){
-        var rule_empty = [ /\n/g, /[a-zA-Z\s]/g, /\d+/g, /（）|【.*?】|〖.*?〗|['"‘“’”]/g ];
-        for (var i = 0; i < rule_empty.length; ++i) text = text.replace(rule_empty[i], '');
 		text = text.replace(/,/g, '，').replace(/\./g, '。').replace(/!/g, '！').replace(/\?/g, '？').replace(/\(/g, '(').replace(/\)/g, '）').replace(/\[/g, '【').replace(/\]/g, '】').replace(/〔/g, '（').replace(/〕/g, '）');
 		text = text.replace(/([。；，：“”（）‘’、？《》])[。；，：“”（）‘’、？《》]/, '$1');
+        var rule_empty = [ /\n/g, /[a-zA-Z\s]/g, /\d+/g, /（）|【.*?】|〖.*?〗|['"‘“’”]/g ];
+        for (var i = 0; i < rule_empty.length; ++i) text = text.replace(rule_empty[i], '');
 		text = text.replace(/(($|（).*?)（/, '$1').replace(/(($|【).*?)【/, '$1').replace(/(($|〖).*?)〖/, '$1').replace(/(($|《).*?)《/, '$1');
 		text = text.replace(/(）.*?)）/, '$1').replace(/(】.*?)】/, '$1').replace(/(〗.*?)〗/, '$1').replace(/(》.*?)》/, '$1');
         var ends = Math.max(text.lastIndexOf('，'), text.lastIndexOf('。'), text.lastIndexOf('？'), text.lastIndexOf('！'));
@@ -129,27 +129,40 @@
     </script>
   </head>
   <body>
+      <div class="jumbotron">
+         <div class="container">
+	  	<h1>无尽的对话</h1>
+		<p>（后现代文本生成器）</p>
+		<a class="btn btn-primary btn-lg" href="#" role="button" href="">我为什么做这个东西</a>
+	  </div>
+	</div>
+	<div class="row">
+	    <div class="col-lg-5">
     
     <form method="post" id="net_sample" class="form-group">
-        <label for="model">model<span class="description"></span></label>
+        <label for="model">初始模型<span class="description"></span></label>
       <select name="model" class="form-control" id="model" placeholder="model name"></select>
-        <label for="input">primetext<span class="description"></span></label>
+        <label for="input">初始文本<span class="description"></span></label>
       <input name="input" type="text" class="form-control" id="input" placeholder="your text" value="">
-      <label for="temperature">temperature<span class="description">(0-1)</span></label>
+      <label for="temperature">温度<span class="description">（0.1保守-1.0多样）</span></label>
       <input name="temperature" type="text" class="form-control" id="temperature" placeholder="0.7" value="0.7">
-      <label for="seed">seed<span class="description"> (any number)</span></label>
+      <label for="seed">随机数种子<span class="description">（任何数）</span></label>
       <input name="seed" type="text" class="form-control" id="seed" placeholder="1" value="1">
-      <label for="length">length<span class="description"> (any number)</span></label>
+      <label for="length">单次产生的文本最大长度<span class="description">（1-200）</span></label>
       <input name="length" type="text" class="form-control" id="length" placeholder="200" value="200">
-      <label for="dialog">dialog<span class="description"> (1-10)</span></label>
+      <label for="dialog">段落数<span class="description">（1-10）</span></label>
       <input name="dialog" type="text" class="form-control" id="dialog" placeholder="1" value="1">
 
       <br/>
-      <button type="button" class="btn btn-default">submit</button>  
+      <button type="button" class="btn btn-default">开始</button>  
       <br/><br/>
-      
-      <label for="output">result</label>
+
+     </form>
+ </div>
+		 <div class="col-lg-7">
+      <label for="output">结果</label>
       <div id="output"></div>
-    </form>
+  </div>
+</div>
   </body>
 </html>
