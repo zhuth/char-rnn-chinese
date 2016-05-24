@@ -1,4 +1,4 @@
-关于我为什么做这个东西，请参看 https://github.com/zhuth/char-rnn-chinese/blob/master/Why.md 。以下是原来的自述文件。
+关于我利用原来的 `char-rnn-chinese` 做了什么，请参看 https://github.com/zhuth/char-rnn-chinese/blob/master/Why.md 。以下是原来的自述文件。
 
 # char-rnn-chinese
 Based on Andrej Karpathy's code https://github.com/karpathy/char-rnn and Samy Bengio's paper http://arxiv.org/abs/1506.03099 
