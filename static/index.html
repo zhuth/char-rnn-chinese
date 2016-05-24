@@ -10,87 +10,146 @@
     
     <style>
       body{ padding:20px; padding-top:0px;}
-      #form_net_sample{max-width:650px;margin-right:auto;margin-left:auto;}
+      #net_sample{max-width:650px;margin-right:auto;margin-left:auto;}
       .description{font-weight:200;font-size:13px;}
       label{margin-top:5px;}
+	  span.model0 { background-color: #F2FE28; }
+	  span.model1 { background-color: #D2F557; }
+	  span.model2 { background-color: #5AF580; }
+	  span.model3 { background-color: #04DD98; }
+	  span.model4 { background-color: #EEE; }
+	  span:hover:before {
+	      content: attr(alt);
+		  background: #eee;
+	  }
+	  span:hover {
+	  	  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.7);
+	  }
     </style>
     
     <script>
     function wash(text){
-		var rule_empty = [ /\n/g, /\s+/g, /\d+/g, /（）|【.*?】|〖.*?〗|['"‘“’”]/g ];
-		for (var i = 0; i < rule_empty.length; ++i) text = text.replace(rule_empty[i], '');
-		var ends = Math.max(text.lastIndexOf(','), text.lastIndexOf('.'), text.lastIndexOf('，'), text.lastIndexOf('。'), text.lastIndexOf('?'), text.lastIndexOf('？'), text.lastIndexOf('！'), text.lastIndexOf('!'));
-		text = text.substr(0, ends + 1);
-		if (text[ends] == ',' || text[ends] == '，') text = text.substr(0, text.length-1) + '。';
-		return text;
+        var rule_empty = [ /\n/g, /[a-zA-Z\s]/g, /\d+/g, /（）|【.*?】|〖.*?〗|['"‘“’”]/g ];
+        for (var i = 0; i < rule_empty.length; ++i) text = text.replace(rule_empty[i], '');
+		text = text.replace(/,/g, '，').replace(/\./g, '。').replace(/!/g, '！').replace(/\?/g, '？').replace(/\(/g, '(').replace(/\)/g, '）').replace(/\[/g, '【').replace(/\]/g, '】').replace(/〔/g, '（').replace(/〕/g, '）');
+		text = text.replace(/([。；，：“”（）‘’、？《》])[。；，：“”（）‘’、？《》]/, '$1');
+		text = text.replace(/(($|（).*?)（/, '$1').replace(/(($|【).*?)【/, '$1').replace(/(($|〖).*?)〖/, '$1').replace(/(($|《).*?)《/, '$1');
+		text = text.replace(/(）.*?)）/, '$1').replace(/(】.*?)】/, '$1').replace(/(〗.*?)〗/, '$1').replace(/(》.*?)》/, '$1');
+        var ends = Math.max(text.lastIndexOf('，'), text.lastIndexOf('。'), text.lastIndexOf('？'), text.lastIndexOf('！'));
+        for (var i = 0; i < rule_empty.length; ++i) text = text.replace(rule_empty[i], '');
+        text = text.substr(0, ends + 1);
+        // if (text[ends] == '，') text = text.substr(0, text.length-1) + '。';
+        return text;
     }
-    function callRPC(inputdata) {        
+    function performDialog(inputdata) {
+        function callback_first(data) {
+            var text = wash(data.output);
+            $('#output').append('<span class="model' + window.models.indexOf(data.model) + '" alt="' + data.model + '">' + data.primetext + text + '</span>');
+            inputdata['primetext'] = text;
+        }
+		
+		function callback_select(data) {
+			window.model_results[data.model] = data;
+			var selected = data;
+			for (var i = 0; i < window.models.length; ++i) {
+				if (window.model_results[window.models[i]] == undefined) return;
+				var t = window.model_results[window.models[i]];
+				if (t.confidence > selected.confidence) selected = t;
+			}
+
+            var text = wash(selected.output);
+            $('#output').append('<span class="model' + window.models.indexOf(selected.model) + '" alt="' + selected.model + '">' + text + '</span>');
+			inputdata['model'] = selected.model;
+            inputdata['primetext'] = text;
+			
+			nextDialog();
+		}
+		
+		function nextDialog() {
+	        --window.dialog;
+
+	        if (window.dialog > 0) {
+	            window.model_results = {};
+				var current_model = inputdata.model;
+				window.model_results[current_model] = {confidence: -1000};
+
+				for (var i = 0; i < window.models.length; ++i) {
+					if (window.models[i] == current_model) continue;
+					inputdata['model'] = window.models[i];
+					callRPC(inputdata, callback_select);
+				}
+	        } else {
+	        	$('button').removeAttr('disabled');
+				$('button').css('background', '');
+	        }
+		}
+
+        callRPC(inputdata, callback_first);
+		
+		nextDialog();
+    }
+    function callRPC(inputdata, callback) {        
         $.ajax({
           type: "POST",
           contentType: "application/json; charset=utf-8",
           url: "/rpc",
           data: JSON.stringify(inputdata),
           success: function (data) {
-			  text = wash(data.output);
-		      var v = $('#form_output').val()
-			  v += '[' + inputdata['model'] + ']\n' + (window.dialog == parseInt($('#form_dialog').val()) ? data.primetext : '') + text + '\n';
-			  $('#form_output').val(v);
-			  --window.dialog;
-			  inputdata['primetext'] = text;
-			  inputdata['model'] = $('option')[parseInt(Math.random()*$('option').length)].value;
-			  
-			  if (window.dialog > 0) callRPC(inputdata);
-	      },
+              callback(data)
+          },
           dataType: "json"
         });
     }
     $(function() { 
+        $('#seed').val(new Date().getTime()%10240);
 		$.get('/models', function(data) {
-			for (var i = 0; i < data.models.length; ++i)
-				$('#form_model').append('<option vallue="TXT">TXT</option>'.replace(/TXT/g, data.models[i]));
-		});
+            for (var i = 0; i < data.models.length; ++i)
+                $('#model').append('<option vallue="TXT">TXT</option>'.replace(/TXT/g, data.models[i]));
+			window.models = data.models;
+        });
         $( "button" ).click(function( event ) {
-			var primetext = $('#form_input').val();
-			if(primetext.length <= 0){primetext = '';}
-			var temperature = $('#form_temperature').val();
-			if(temperature <= 0 || temperature > 10){temperature = '1';}
-			var seed = $('#form_seed').val();
-			if(seed.length <= 0){seed = '123';}
-			var length = parseInt($('#form_length').val());
-			if (length <= 0) length = 100;
-			window.dialog = parseInt($('#form_dialog').val()); // <-- THIS IS GLOBAL!
-			window.dialog = (dialog < 1) ? 1 : ((dialog > 10) ? 10 : dialog);
-			$('#form_dialog').val(dialog);
-			$('#form_output').val('');
-			callRPC({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#form_model').val(), "length":length});
-			$('#form_seed').val(new Date().getTime()%10240);
-			return false;
+			$(this).attr('disabled', 'disabled');
+			$(this).css('background', 'url(loading.gif) center center no-repeat');
+            var primetext = $('#input').val();
+            if(primetext.length <= 0){primetext = '';}
+            var temperature = $('#temperature').val();
+            if(temperature <= 0 || temperature > 10){temperature = '1';}
+            var seed = $('#seed').val();
+            if(seed.length <= 0){seed = '123';}
+            var length = parseInt($('#length').val());
+            if (length <= 0) length = 100;
+            window.dialog = parseInt($('#dialog').val()); // <-- THIS IS GLOBAL!
+            window.dialog = (dialog < 1) ? 1 : ((dialog > 10) ? 10 : dialog);
+            $('#dialog').val(dialog);
+            $('#output').html('');
+            performDialog({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#model').val(), "length":length});
+            return false;
         });
     });
     </script>
   </head>
   <body>
     
-    <form method="post" id="form_net_sample" class="form-group">
-		<label for="form_model">model<span class="description"></span></label>
-      <select name="form_model" class="form-control" id="form_model" placeholder="model name"></select>
-		<label for="form_input">primetext<span class="description"></span></label>
-      <input name="form_input" type="text" class="form-control" id="form_input" placeholder="your text" value="">
-      <label for="form_temperature">temperature<span class="description">(0-1)</span></label>
-      <input name="form_temperature" type="text" class="form-control" id="form_temperature" placeholder="0.7" value="0.7">
-      <label for="form_seed">seed<span class="description"> (any number)</span></label>
-      <input name="form_seed" type="text" class="form-control" id="form_seed" placeholder="1" value="1">
-      <label for="form_length">length<span class="description"> (any number)</span></label>
-      <input name="form_length" type="text" class="form-control" id="form_length" placeholder="200" value="200">
-      <label for="form_dialog">dialog<span class="description"> (1-10)</span></label>
-      <input name="form_dialog" type="text" class="form-control" id="form_dialog" placeholder="1" value="1">
+    <form method="post" id="net_sample" class="form-group">
+        <label for="model">model<span class="description"></span></label>
+      <select name="model" class="form-control" id="model" placeholder="model name"></select>
+        <label for="input">primetext<span class="description"></span></label>
+      <input name="input" type="text" class="form-control" id="input" placeholder="your text" value="">
+      <label for="temperature">temperature<span class="description">(0-1)</span></label>
+      <input name="temperature" type="text" class="form-control" id="temperature" placeholder="0.7" value="0.7">
+      <label for="seed">seed<span class="description"> (any number)</span></label>
+      <input name="seed" type="text" class="form-control" id="seed" placeholder="1" value="1">
+      <label for="length">length<span class="description"> (any number)</span></label>
+      <input name="length" type="text" class="form-control" id="length" placeholder="200" value="200">
+      <label for="dialog">dialog<span class="description"> (1-10)</span></label>
+      <input name="dialog" type="text" class="form-control" id="dialog" placeholder="1" value="1">
 
       <br/>
       <button type="button" class="btn btn-default">submit</button>  
       <br/><br/>
       
-      <label for="form_output">result</label>
-      <textarea disabled name="form_output" id="form_output" class="form-control" rows="15"></textarea>
+      <label for="output">result</label>
+      <div id="output"></div>
     </form>
   </body>
 </html>
