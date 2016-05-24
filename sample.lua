@@ -223,9 +223,9 @@ if opt.d > 0 then
         end
 
 		if opt.gpuid >= 0 then
-	        cutorch.manualSeed(opt.seed)
+	        cutorch.manualSeed(dup.seed)
 	    else
-			torch.manualSeed(opt.seed)
+			torch.manualSeed(dup.seed)
 		end
 		
         if models[dup.model] == nil then models[dup.model] = load(dup) end
