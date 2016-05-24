@@ -120,7 +120,7 @@
             var seed = $('#seed').val();
             if(seed.length <= 0){seed = '123';}
             var length = parseInt($('#length').val());
-            if (length <= 0) length = 100;
+            if (length <= 0) length = 200; if (length > 200) length = 200;
             window.dialog = parseInt($('#dialog').val()); // <-- THIS IS GLOBAL!
             window.dialog = (dialog < 1) ? 1 : ((dialog > 10) ? 10 : dialog);
             $('#dialog').val(dialog);
