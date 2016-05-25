@@ -33,13 +33,33 @@
 		var otext = '';
 		while (otext != text) {
 			otext = text;
-			text = text.replace(/([。；，：“”（）‘’、？《》])[。；，：“”（）‘’、？《》]/, '$1');
+			text = text.replace(/([。；，：“”（）‘’、？《》【】〖〗])[。；，：“”（）‘’、？《》【】〖〗]/, '$1');
 		}
         var rule_empty = [ /\n/g, /[a-zA-Z\s]/g, /\d+/g, /（）|【.*?】|〖.*?〗|['"‘“’”]/g ];
         for (var i = 0; i < rule_empty.length; ++i) text = text.replace(rule_empty[i], '');
-		text = text.replace(/(($|（).*?)（/, '$1').replace(/(($|【).*?)【/, '$1').replace(/(($|〖).*?)〖/, '$1').replace(/(($|《).*?)《/, '$1');
-		text = text.replace(/(）.*?)）/, '$1').replace(/(】.*?)】/, '$1').replace(/(〗.*?)〗/, '$1').replace(/(》.*?)》/, '$1');
-        var ends = Math.max(text.lastIndexOf('，'), text.lastIndexOf('。'), text.lastIndexOf('？'), text.lastIndexOf('！'));
+		var brackets = '（）【】〖〗《》';
+		var lastb = '';
+		otext = '';
+		for (var i = 0; i < text.length; i == 2) {
+			var idx = brackets.indexOf(text[i]);
+			if (idx < 0){
+				otext += text[i];
+				continue;
+			}
+
+			if (idx % 2 == 1) {
+				if (lastb == brackets[idx-1]) { lastb = ''; otext += text[i]; }
+			} else {
+				if (lastb != '') continue;
+			}
+		}
+		if (lastb != '') {
+			var idx = otext.lastIndexOf(lastb);
+			otext = otext.substr(0, idx) + otext.substr(idx+1);
+		}
+		text = otext;
+		
+		var ends = Math.max(text.lastIndexOf('，'), text.lastIndexOf('。'), text.lastIndexOf('？'), text.lastIndexOf('！'));
         for (var i = 0; i < rule_empty.length; ++i) text = text.replace(rule_empty[i], '');
         text = text.substr(0, ends + 1);
         // if (text[ends] == '，') text = text.substr(0, text.length-1) + '。';
