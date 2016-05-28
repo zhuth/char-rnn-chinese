@@ -11,7 +11,8 @@
 - 在 `char-rnn-chinese` 的基础上修改了网页布局，并完成此“对话”。
 - 对采样程序处理未收录字符的部分略作了修改。
 
-**新增** http://innovors.info:9987/?subdir=guwen 古文（根据全唐文数据训练）生成
+**新增** http://innovors.info:9987/?subdir=guwen 古文（根据全唐文数据训练）生成；
+
 **新增** 福柯（根据《疯癫与文明》、《规训与惩罚》）；各家杂合（“overall”）。
 
 
