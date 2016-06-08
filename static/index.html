@@ -125,7 +125,7 @@
     }
     $(function() { 
         $('#seed').val(new Date().getTime()%10240);
-		$.get('/models', function(data) {
+		$.get('/models' + location.search, function(data) {
             for (var i = 0; i < data.models.length; ++i)
                 $('#model').append('<option vallue="TXT">TXT</option>'.replace(/TXT/g, data.models[i]));
 			window.models = data.models;

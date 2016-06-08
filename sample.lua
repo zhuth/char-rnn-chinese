@@ -262,11 +262,12 @@ if opt.d > 0 then
     function wsapi_listmodels(wsapi_env)
        local headers = { ["Content-type"] = "application/json" }
        local req = wsapi.request.new(wsapi_env)
-       
+       subdir = req.GET['subdir']
+       if subdir == nil or string.find(subdir, "/") then subdir = '' end
        models = {}
-       for file in lfs.dir[[cv/]] do
+       for file in lfs.dir('cv/' .. subdir) do
            if string.sub(''..file, -3) == '.t7' then
-               models[#models+1] = 'cv/' .. file
+               models[#models+1] = 'cv/' .. subdir .. '/' .. file
            end
        end
        
