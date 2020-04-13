@@ -18,9 +18,17 @@ if __name__ == "__main__":
                         help="chekpoint file", dest="checkpoint", default="")
     parser.add_argument("-i", "--training",
                         help="training data", dest="training", default="data/存在与时间.txt")
+    parser.add_argument("-b", "--batch-size",
+                        help="batch size", dest="batch_size", type=int, default=128)
+    parser.add_argument("-e", "--end-epoch",
+                        help="epoches", dest="end_epoch", type=int, default=100)
+    parser.add_argument("-d", "--checkpoint-dir",
+                        help="default directory for saving checkpoints", dest="ckpt", default="ckpt")
     args = parser.parse_args()
-    training_name = os.path.basename(args.training).rsplit('.', 1)[0]
 
+    batch_size = args.batch_size
+    end_epoch = args.end_epoch
+    training_name = os.path.basename(args.training).rsplit('.', 1)[0]
     corpus_pth = args.training + '.pth'
 
     if os.path.exists(corpus_pth):
@@ -39,6 +47,8 @@ if __name__ == "__main__":
 
     train_set = TextDataset(arr)
     train_data = DataLoader(train_set, batch_size, True, num_workers=4)
+
+    min_loss = None
     
     for epoch in range(start_epoch, end_epoch):
         train_loss = 0
@@ -64,10 +74,12 @@ if __name__ == "__main__":
 
         print(f'epoch: {epoch+1}, perplexity is: {np.exp(train_loss / len(train_data)):.3f}')
         predict(model, corpus, '', 100)
-        torch.save({
-            'epoch': epoch,            
-            'state_dict': model.state_dict(),
-            'optimizer' : optimizer.state_dict(),
-            'arr': arr,
-            'vocab_size': corpus.vocab_size
-        }, f'checkpoint_{training_name}_{epoch}_{train_loss}.pth')
+        if min_loss is None or min_loss > train_loss:
+            min_loss = train_loss
+            torch.save({
+                'epoch': epoch,            
+                'state_dict': model.state_dict(),
+                'optimizer' : optimizer.state_dict(),
+                'arr': arr,
+                'vocab_size': corpus.vocab_size
+            }, f'{args.ckpt}/checkpoint_{training_name}_{epoch}.pth')
