@@ -1,4 +1,4 @@
 __pycache__
 .vs*
 data/
-checkpoint_*.pth'*.pth' 
+*.pth
