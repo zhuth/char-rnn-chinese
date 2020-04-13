@@ -40,7 +40,7 @@
 		var brackets = '（）【】〖〗《》';
 		var lastb = '';
 		otext = '';
-		for (var i = 0; i < text.length; i == 2) {
+		for (var i = 0; i < text.length; i++) {
 			var idx = brackets.indexOf(text[i]);
 			if (idx < 0){
 				otext += text[i];
@@ -50,7 +50,10 @@
 			if (idx % 2 == 1) {
 				if (lastb == brackets[idx-1]) { lastb = ''; otext += text[i]; }
 			} else {
-				if (lastb != '') continue;
+				if (lastb == '') {
+					lastb = text[i];
+					otext += text[i];
+				}
 			}
 		}
 		if (lastb != '') {
@@ -65,94 +68,39 @@
         // if (text[ends] == '，') text = text.substr(0, text.length-1) + '。';
         return text;
     }
-    function performDialog(inputdata) {
-        function callback_first(data) {
-            var text = wash(data.output);
-            $('#output').append('<span class="model' + window.models.indexOf(data.model) + '" alt="' + data.model + '">' + data.primetext + text + '</span>');
-            inputdata['primetext'] = text;
-			nextDialog();
-        }
-		
-		function callback_select(data) {
-			window.model_results[data.model] = data;
-			var selected = data;
-			for (var i = 0; i < window.models.length; ++i) {
-				if (window.model_results[window.models[i]] == undefined) return;
-				var t = window.model_results[window.models[i]];
-				if (t.confidence > selected.confidence) selected = t;
-			}
-
-            var text = wash(selected.output);
-            $('#output').append('<span class="model' + window.models.indexOf(selected.model) + '" alt="' + selected.model + '">' + text + '</span>');
-			inputdata['model'] = selected.model;
-            inputdata['primetext'] = text;
-			
-			nextDialog();
-		}
-		
-		function nextDialog() {
-	        --window.dialog;
-
-	        if (window.dialog > 0) {
-	            window.model_results = {};
-				var current_model = inputdata.model;
-				window.model_results[current_model] = {confidence: -1000};
-
-				for (var i = 0; i < window.models.length; ++i) {
-					if (window.models[i] == current_model) continue;
-					inputdata['model'] = window.models[i];
-					callRPC(inputdata, callback_select);
-				}
-	        } else {
-	        	$('button').removeAttr('disabled');
-				$('button').css('background', '');
-	        }
-		}
-
-        callRPC(inputdata, callback_first);
-    }
-    function callRPC(inputdata, callback) {        
+    function performDialog(inputdata) {        
         $.ajax({
-          type: "POST",
-          contentType: "application/json; charset=utf-8",
-          url: "/rpc",
-          data: JSON.stringify(inputdata),
-          success: function (data) {
-              callback(data)
-          },
-          dataType: "json"
+        type: "GET",
+        url: "/gen",
+        data: inputdata,
+        success: function (data) {
+            data.forEach(x => {
+                var text = wash(x.text);
+                $('#output').append('<span class="model' + x.persona + '" alt="' + x.persona + '">' + text + '</span><br />');
+            });
+            $('button').css('background', '').removeAttr('disabled');
+        },
+        dataType: "json"
         });
     }
+
     $(function() { 
-        $('#seed').val(new Date().getTime()%10240);
-		$.get('/models' + location.search, function(data) {
-            for (var i = 0; i < data.models.length; ++i)
-                $('#model').append('<option vallue="TXT">TXT</option>'.replace(/TXT/g, data.models[i]));
-			window.models = data.models;
-        });
         $( "button" ).click(function( event ) {
 			$(this).attr('disabled', 'disabled');
 			$(this).css('background', 'url(loading.gif) center center no-repeat');
-            var primetext = $('#input').val();
+            var primetext = $('#seed').val();
             if(primetext.length <= 0){primetext = '';}
-			
-            var temperature = $('#temperature').val();
-            if(temperature <= 0 || temperature > 10){temperature = '1';}
-			$('#temperature').val(temperature);
-
-            var seed = $('#seed').val();
-            if(seed.length <= 0){seed = '123';}
-			$('#seed').val(seed);
 			
             var length = parseInt($('#length').val());
             if (length <= 0) length = 200; if (length > 200) length = 200;
 			$('#length').val(length)
-            window.dialog = parseInt($('#dialog').val()); // <-- THIS IS GLOBAL!
+            
+			window.dialog = parseInt($('#iters').val());
             window.dialog = (dialog < 1) ? 1 : ((dialog > 10) ? 10 : dialog);
             
 			$('#dialog').val(dialog);
             $('#output').html('');
-            performDialog({"primetext":primetext, "temperature":temperature, "seed":seed, "model":$('#model').val(), "length":length});
+            performDialog({"primetext":primetext, "iters":window.dialog, "length":length});
             return false;
         });
     });
@@ -163,25 +111,19 @@
          <div class="container">
 	  	<h1>无尽的对话</h1>
 		<p>（后现代文本生成器）</p>
-		<a class="btn btn-primary btn-lg" href="https://github.com/zhuth/char-rnn-chinese/blob/master/Readme.md" role="button" href="">我为什么做这个东西</a>
+		<a class="btn btn-primary btn-lg" href="https://github.com/zhuth/char-rnn-chinese/blob/master/Readme.md" role="button" href="">这是什么</a>
 	  </div>
 	</div>
 	<div class="row">
 	    <div class="col-lg-5">
     
     <form method="post" id="net_sample" class="form-group">
-        <label for="model">初始模型<span class="description"></span></label>
-      <select name="model" class="form-control" id="model" placeholder="model name"></select>
-        <label for="input">初始文本<span class="description"></span></label>
-      <input name="input" type="text" class="form-control" id="input" placeholder="your text" value="">
-      <label for="temperature">温度<span class="description">（0.1保守-1.0多样）</span></label>
-      <input name="temperature" type="text" class="form-control" id="temperature" placeholder="0.7" value="0.7">
-      <label for="seed">随机数种子<span class="description">（任何数）</span></label>
-      <input name="seed" type="text" class="form-control" id="seed" placeholder="1" value="1">
+      <label for="seed">初始文本<span class="description"></span></label>
+      <input name="seed" type="text" class="form-control" id="seed" placeholder="请输入文本。" value="">
       <label for="length">单次产生的文本最大长度<span class="description">（1-200）</span></label>
       <input name="length" type="text" class="form-control" id="length" placeholder="200" value="200">
-      <label for="dialog">段落数<span class="description">（1-10）</span></label>
-      <input name="dialog" type="text" class="form-control" id="dialog" placeholder="1" value="1">
+      <label for="iters">段落数<span class="description">（1-10）</span></label>
+      <input name="iters" type="text" class="form-control" id="iters" placeholder="1" value="1">
 
       <br/>
       <button type="button" class="btn btn-default">开始</button>  

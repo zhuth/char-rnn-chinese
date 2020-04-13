@@ -1,1 +1,0 @@
-Moved to https://github.com/zhuth/char-rnn-chinese/blob/master/Readme.md.
